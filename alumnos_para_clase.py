@@ -57,7 +57,7 @@ Desea crearlo ? Si o No :").upper()
 
 # Nuevo metodo para eliminar  un alumno  
     def eliminar_alumno(self, index):
-        self.alumnos.pop(index)
+        return self.alumnos.pop(index)
    
 
     

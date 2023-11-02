@@ -230,6 +230,7 @@ PARA PARCIAL
 
 from alumnos_para_clase import *
 from presentismo_para_clase import *
+from controlador_reciclaje import *
 from mensajes import *
 
 
@@ -262,8 +263,11 @@ def listar():
 # Funcion que modifica o elimina el alumno el parametro accion m Modifica el alumno y e Elimina el alumno y guarda el cambio. 
 def modif_elim_alumno(accion):
     # accion si es  m modifica y e elimina
+    
     alumnos = Alumnos()
     tomar_lista =  Presentismo_dia()
+    actividad = Control_actividad()
+
     aper1 = alumnos.cargar_alumnos('alumnos.csv')
     if aper1 == True:  
         tamano = len(alumnos.alumnos)-1
@@ -272,6 +276,9 @@ def modif_elim_alumno(accion):
         while True and tamano >-1:
             try:
                 index=int(input(f"\n                    Ingrese el Nro de alumno 0 - {tamano} (x para salir): "))
+
+                alumno_db = f'{alumnos.alumnos[index].apellido} {alumnos.alumnos[index].nombre}'
+
                 if index >=0 and index<=tamano:    
                     if accion.lower() == 'm': 
                         n_alumno = Alumno(input("\n                    Ingrese Nombre: ").capitalize(),
@@ -281,11 +288,12 @@ def modif_elim_alumno(accion):
                             tomar_lista.cargar_presentismo('presentismo.csv')
 
                             for pres in tomar_lista.pres_dia:
-                                if pres.alumno == f'{alumnos.alumnos[index].apellido} {alumnos.alumnos[index].nombre}':
+                                if pres.alumno == alumno_db:
                                     pres.alumno = f'{n_alumno.apellido} {n_alumno.nombre}'
 
-                            tomar_lista.guardar_presentismo('presentismo.csv')
+                            actividad.logger('log.csv', 'Modificado', alumno_db)
 
+                            tomar_lista.guardar_presentismo('presentismo.csv')
                             alumnos.actualizar_alumno(index,n_alumno)
 
                             correcto = True
@@ -295,13 +303,23 @@ def modif_elim_alumno(accion):
                     elif accion.lower() == 'e':
 
                         tomar_lista.cargar_presentismo('presentismo.csv')
+
                         list_presnt_nuevo = []
+                        list_presnt_eliminado = []
+
                         for fecha, alumno, estado in tomar_lista.devolver():
-                            if alumno != f'{alumnos.alumnos[index].apellido} {alumnos.alumnos[index].nombre}':
+                            if alumno != alumno_db:
                                 list_presnt_nuevo.append([fecha,alumno,estado])
+                            if alumno == alumno_db:
+                                list_presnt_eliminado.append([fecha,alumno,estado])
+
+                        actividad.eliminar_papelera_presentismo('eliminado.csv', list_presnt_eliminado)
                         tomar_lista.eliminar_presentismo('presentismo.csv', list_presnt_nuevo)
                         
-                        alumnos.eliminar_alumno(index)
+                        actividad.logger('log.csv', 'Eliminado', alumno_db)
+                        alumno_eliminado = alumnos.eliminar_alumno(index)
+                        actividad.eliminar_papelera_alumno('eliminado.csv', alumno_eliminado)
+
                         correcto = True                    
                     break
             except ValueError:
